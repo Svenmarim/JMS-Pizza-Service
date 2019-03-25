@@ -1,11 +1,17 @@
 package models;
 
+import javax.jms.Destination;
 import java.io.Serializable;
 
 public class Request implements Serializable {
     private String name;
     private String address;
     private String description;
+    private Destination destination;
+
+    public Request(){
+
+    }
 
     public Request(String name, String address, String description) {
         this.name = name;
@@ -25,10 +31,18 @@ public class Request implements Serializable {
         return description;
     }
 
+    public void setDestination(Destination destination) {
+        this.destination = destination;
+    }
+
+    public Destination getDestination() {
+        return destination;
+    }
+
     @Override
     public String toString() {
-        return "Order: " + getDescription() + "\n" +
-                "Name: " + getName() + "\n" +
-                "Address: " + getAddress();
+        return "Order: " + getDescription() + "; " +
+                "Name: " + getName() + "; " +
+                "Address: " + getAddress() + ";";
     }
 }

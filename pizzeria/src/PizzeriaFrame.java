@@ -1,3 +1,7 @@
+import interfaces.ICallbackReplyFrame;
+import interfaces.ICallbackRequestFrame;
+import message_gateways.MessageReceiverGateway;
+import message_gateways.MessageSenderGateway;
 import models.Reply;
 import models.Request;
 
@@ -15,22 +19,22 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-public class PizzeriaFrame extends JFrame {
+public class PizzeriaFrame extends JFrame implements ICallbackRequestFrame, ICallbackReplyFrame {
 
     private static final long serialVersionUID = 1L;
     private JTextField tfPrice;
     private JTextField tfTime;
     private DefaultListModel<Request> listModel = new DefaultListModel<>();
     private JList<Request> list = new JList<>(listModel);
+    private DefaultListModel<Reply> listModelApproved = new DefaultListModel<>();
+    private JList<Reply> listApproved = new JList<>(listModelApproved);
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
                 PizzeriaFrame framePyramide = new PizzeriaFrame("PYRAMIDE");
-                PizzeriaFrame framePinokkio = new PizzeriaFrame("PINOKKIO");
                 PizzeriaFrame frameSphinx = new PizzeriaFrame("SPHINX");
                 framePyramide.setVisible(true);
-                framePinokkio.setVisible(true);
                 frameSphinx.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -42,11 +46,12 @@ public class PizzeriaFrame extends JFrame {
      * Create the frame.
      */
     public PizzeriaFrame(String pizzeriaName) {
-//        bankAppGateway = new BankAppGateway(pizzeriaName);
-
         setTitle("Pizzeria - " + pizzeriaName);
+        MessageSenderGateway messageSenderGateway = new MessageSenderGateway("queue", null);
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 450, 300);
+        setResizable(false);
+        setBounds(100, 100, 450, 500);
         JPanel contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         setContentPane(contentPane);
@@ -68,7 +73,21 @@ public class PizzeriaFrame extends JFrame {
 
         scrollPane.setViewportView(list);
 
-        JLabel lblNewLabel = new JLabel("price");
+        JButton btnDelete = new JButton("DELETE");
+        btnDelete.addActionListener(e -> {
+            if (list.getSelectedValue() != null) {
+                Request request = list.getSelectedValue();
+                listModel.removeElement(request);
+                list.repaint();
+            }
+        });
+        GridBagConstraints gbc_btnDelete = new GridBagConstraints();
+        gbc_btnDelete.anchor = GridBagConstraints.NORTHWEST;
+        gbc_btnDelete.gridx = 0;
+        gbc_btnDelete.gridy = 1;
+        contentPane.add(btnDelete, gbc_btnDelete);
+
+        JLabel lblNewLabel = new JLabel("Price");
         GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
         gbc_lblNewLabel.anchor = GridBagConstraints.EAST;
         gbc_lblNewLabel.insets = new Insets(0, 0, 0, 5);
@@ -86,7 +105,7 @@ public class PizzeriaFrame extends JFrame {
         contentPane.add(tfPrice, gbc_tfPrice);
         tfPrice.setColumns(10);
 
-        JLabel lblNewLabel_1 = new JLabel("time");
+        JLabel lblNewLabel_1 = new JLabel("Time");
         GridBagConstraints gbc_lblNewLabel_1 = new GridBagConstraints();
         gbc_lblNewLabel_1.anchor = GridBagConstraints.EAST;
         gbc_lblNewLabel_1.insets = new Insets(0, 0, 0, 5);
@@ -104,17 +123,24 @@ public class PizzeriaFrame extends JFrame {
         contentPane.add(tfTime, gbc_tfTime);
         tfTime.setColumns(10);
 
-        JButton btnSendReply = new JButton("send reply");
+        JButton btnSendReply = new JButton("Send reply");
         btnSendReply.addActionListener(e -> {
-            Request request = list.getSelectedValue();
-            double price = Double.parseDouble(tfPrice.getText());
-            int arrivalMinutes = Integer.parseInt(tfTime.getText());
-            Reply reply = new Reply(request, price, arrivalMinutes);
-            if (request != null) {
-                listModel.removeElement(request);
-                list.repaint();
-                // TODO: send reply
-//                bankAppGateway.sendBankReply(reply);
+            if (list.getSelectedValue() != null) {
+                Request request = list.getSelectedValue();
+                if (!tfPrice.getText().isEmpty() && !tfTime.getText().isEmpty()) {
+                    try {
+                        double price = Double.parseDouble(tfPrice.getText());
+                        int arrivalMinutes = Integer.parseInt(tfTime.getText());
+                        Reply reply = new Reply(request, price, arrivalMinutes, pizzeriaName);
+                        if (request != null) {
+                            listModel.removeElement(request);
+                            list.repaint();
+                            messageSenderGateway.sendReply(reply, pizzeriaName);
+                        }
+                    } catch (Exception ignored) {
+
+                    }
+                }
             }
         });
         GridBagConstraints gbc_btnSendReply = new GridBagConstraints();
@@ -123,11 +149,55 @@ public class PizzeriaFrame extends JFrame {
         gbc_btnSendReply.gridy = 1;
         contentPane.add(btnSendReply, gbc_btnSendReply);
 
-        // TODO: start listening to requests
-//        bankAppGateway.receiveBankRequest(this::onRequestReceived);
+        JLabel lblNewLabel_2 = new JLabel("Accepted requests");
+        GridBagConstraints gbc_lblNewLabel_2 = new GridBagConstraints();
+        gbc_lblNewLabel_2.anchor = GridBagConstraints.WEST;
+        gbc_lblNewLabel_2.insets = new Insets(0, 0, 0, 5);
+        gbc_lblNewLabel_2.gridx = 0;
+        gbc_lblNewLabel_2.gridy = 4;
+        contentPane.add(lblNewLabel_2, gbc_lblNewLabel_2);
+
+        JScrollPane scrollPane2 = new JScrollPane();
+        GridBagConstraints gbc_scrollPane2 = new GridBagConstraints();
+        gbc_scrollPane2.gridwidth = 5;
+        gbc_scrollPane2.insets = new Insets(0, 0, 5, 5);
+        gbc_scrollPane2.fill = GridBagConstraints.BOTH;
+        gbc_scrollPane2.gridx = 0;
+        gbc_scrollPane2.gridy = 5;
+        contentPane.add(scrollPane2, gbc_scrollPane2);
+
+        scrollPane2.setViewportView(listApproved);
+
+        JButton btnDelete2 = new JButton("DELETE");
+        btnDelete2.addActionListener(e -> {
+            if (listApproved.getSelectedValue() != null) {
+                Reply reply = listApproved.getSelectedValue();
+                listModel.removeElement(reply);
+                listApproved.repaint();
+            }
+        });
+        GridBagConstraints gbc_btnDelete2 = new GridBagConstraints();
+        gbc_btnDelete2.anchor = GridBagConstraints.NORTHWEST;
+        gbc_btnDelete2.gridx = 0;
+        gbc_btnDelete2.gridy = 6;
+        contentPane.add(btnDelete2, gbc_btnDelete2);
+
+        MessageReceiverGateway messageReceiverTopicGateway = new MessageReceiverGateway("topic", "requestTopic");
+        messageReceiverTopicGateway.receiveRequest(this);
+
+        MessageReceiverGateway messageReceiverQueueGateway = new MessageReceiverGateway("queue", pizzeriaName);
+        messageReceiverQueueGateway.receiveReply(this);
     }
 
+    @Override
     public void onRequestReceived(Request request) {
         listModel.addElement(request);
+        list.repaint();
+    }
+
+    @Override
+    public void onReplyReceived(Reply reply) {
+        listModelApproved.addElement(reply);
+        listApproved.repaint();
     }
 }

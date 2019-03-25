@@ -11,13 +11,15 @@ public abstract class MessageGateway {
     private Destination destination;
     private Connection connection;
 
-    public void initConnection(Properties props) throws NamingException, JMSException {
+    public void initConnection(Properties props, String lookupName) throws NamingException, JMSException {
         Context jndiContext = new InitialContext(props);
         ConnectionFactory connectionFactory;
         connectionFactory = (ConnectionFactory) jndiContext.lookup("ConnectionFactory");
         connection = connectionFactory.createConnection();
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        destination = (Destination) jndiContext.lookup("first");
+        if(lookupName != null){
+            destination = (Destination) jndiContext.lookup(lookupName);
+        }
     }
 
     public Session getSession() {
