@@ -33,6 +33,12 @@ public class MessageSenderGateway extends MessageGateway {
             createAndSendMessage(producer, replyToName, request);
         } catch (JMSException | JsonProcessingException | NamingException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                getConnection().close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -50,6 +56,12 @@ public class MessageSenderGateway extends MessageGateway {
             createAndSendMessage(producer, pizzaName, reply);
         } catch (JMSException | JsonProcessingException | NamingException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                getConnection().close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -73,6 +85,12 @@ public class MessageSenderGateway extends MessageGateway {
             producer.send(message);
         } catch (JMSException | JsonProcessingException | NamingException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                getConnection().close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
         }
     }
 
