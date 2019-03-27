@@ -140,6 +140,12 @@ public class CustomerFrame extends JFrame implements ICallbackReplyFrame {
         btnApprove.addActionListener(arg0 -> {
             if (list.getSelectedValue() != null) {
                 Reply reply = list.getSelectedValue();
+
+                //Send request to topic to delete existing messages
+                messageSenderGateway = new MessageSenderGateway("topic", "requestTopic");
+                messageSenderGateway.sendRequest(reply.getRequest(), id);
+
+                // Send approval
                 messageSenderGateway = new MessageSenderGateway("queue", null);
                 messageSenderGateway.sendApproval(reply);
                 listModel.removeElement(reply);

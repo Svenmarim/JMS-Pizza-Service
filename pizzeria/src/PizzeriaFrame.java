@@ -5,10 +5,9 @@ import message_gateways.MessageSenderGateway;
 import models.Reply;
 import models.Request;
 
-import java.awt.EventQueue;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
+import java.awt.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -28,6 +27,7 @@ public class PizzeriaFrame extends JFrame implements ICallbackRequestFrame, ICal
     private JList<Request> list = new JList<>(listModel);
     private DefaultListModel<Reply> listModelApproved = new DefaultListModel<>();
     private JList<Reply> listApproved = new JList<>(listModelApproved);
+    private List<Request> latestRequests = new ArrayList<>();
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
@@ -191,8 +191,21 @@ public class PizzeriaFrame extends JFrame implements ICallbackRequestFrame, ICal
 
     @Override
     public void onRequestReceived(Request request) {
+        for (Request r : latestRequests){
+            if (r.getName().equals(request.getName()) && r.getAddress().equals(request.getAddress()) && r.getDescription().equals(request.getDescription())) {
+                if (listModel.contains(r)){
+                    listModel.removeElement(r);
+                }
+                latestRequests.remove(r);
+                return;
+            }
+        }
         listModel.addElement(request);
         list.repaint();
+        if (latestRequests.size() == 50){
+            latestRequests.remove(49);
+        }
+        latestRequests.add(request);
     }
 
     @Override
