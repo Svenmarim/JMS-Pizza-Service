@@ -116,4 +116,27 @@ public class MessageSenderGateway extends MessageGateway {
         // send the message
         producer.send(message);
     }
+
+    public void sendRequestPerformanceTest(int amount){
+        try {
+            MessageProducer producer = getSession().createProducer(getDestination());
+
+            for (int i = 1; i < amount + 1; i++) {
+                // create a text message
+                Message message = getSession().createTextMessage("message" + i);
+
+                // send the message
+                producer.send(message);
+            }
+
+        } catch (JMSException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                getConnection().close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
